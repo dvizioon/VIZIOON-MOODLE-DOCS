@@ -1,0 +1,19 @@
+---
+description: Nomenclatura de repositórios e componentes de plugins Moodle no GitHub
+alwaysApply: false
+---
+
+# Nome GitHub + frankenstyle
+
+| Peça | Formato | Exemplo |
+|------|---------|---------|
+| Repo GitHub | `moodle-<tipo>_<nome>` | `moodle-report_activities` |
+| Componente PHP | `<tipo>_<nome>` | `report_activities` |
+| Pasta no Moodle | `<dir>/<nome>/` | `report/activities/` |
+| Capability | `<tipo>/<nome>:<cap>` | `report/activities:view` |
+
+Tipos comuns: `mod`, `block`→pasta `blocks`, `local`, `tool`→`admin/tool`, `report`, `theme`, `filter`, `format`.
+
+Um plugin = um repo. Branch/tag por release; **não** pastas `_v1`/`_v5` no mesmo Git.
+
+Skill: `moodle-plugin-github`. Doc: `_meta/Nomenclatura-GitHub.md`.

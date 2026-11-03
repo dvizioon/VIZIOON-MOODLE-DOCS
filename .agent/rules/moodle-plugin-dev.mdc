@@ -1,0 +1,16 @@
+---
+description: APIs e práticas ao documentar ou orientar desenvolvimento de plugins Moodle
+alwaysApply: false
+---
+
+# Plugin Moodle — regras duras
+
+- Escrita: `require_login` + `require_capability` + `require_sesskey`
+- External: `validate_parameters` + `validate_context` + `require_capability`
+- SQL: placeholders; limite via `$DB->get_records_sql(..., $from, $limit)`
+- HTTP: `new \curl()` + SSL
+- Saída: `s()` / Mustache / `format_text`
+- Catch: `\Throwable`
+- UI admin: skill `moodle-admin-layout` (azul)
+- CI GitHub: skill `moodle-plugin-ci` + template `CI/ci.yml`
+- Nome do repo: `moodle-<tipo>_<nome>` — skill `moodle-plugin-github`

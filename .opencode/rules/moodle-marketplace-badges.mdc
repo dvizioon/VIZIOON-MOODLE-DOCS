@@ -1,0 +1,16 @@
+---
+description: Selos Moodle Marketplace — Privacy friendly, AUTO TEST, Early bird
+alwaysApply: false
+---
+
+# Marketplace badges
+
+Automáticos na revisão — não pedir por issue.
+
+| Selo | Como |
+|------|------|
+| Privacy friendly | `classes/privacy/provider.php` + `privacy:metadata` |
+| Automated testing | PHPUnit/Behat + CI `moodle-plugin-ci` verde |
+| Early bird X.Y | Release cedo para Moodle X.Y no Plugins directory |
+
+Skill: `moodle-marketplace-badges`. Doc: `_meta/Marketplace-Selos.md`. Ex.: `report_activities` já tem null_provider.

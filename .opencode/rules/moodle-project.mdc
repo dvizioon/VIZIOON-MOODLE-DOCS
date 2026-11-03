@@ -1,0 +1,17 @@
+---
+description: Contexto do vault APP-MOODLE (docs + skills + rules do time)
+alwaysApply: true
+---
+
+# APP-MOODLE
+
+Este repositório é o **vault de documentação Moodle** (não o core). Skills em `.cursor/skills/`, rules em `.cursor/rules/`.
+
+- Versões: pastas `4.5.8/`, `5.2/`, …
+- Meta: `_meta/` (layout, CI, nomenclatura)
+- CI template: `CI/ci.yml` + skill `moodle-plugin-ci`
+- Segurança: skill `moodle-plugin-security` + notas `*/Seguranca/`
+- Layout admin azul: skill `moodle-admin-layout`
+- Repo GitHub de plugin: `moodle-<tipo>_<nome>` (ex.: `moodle-report_activities`) — skill `moodle-plugin-github`
+
+Não versionar core Moodle, `devdocs/` clonado, zips, secrets.

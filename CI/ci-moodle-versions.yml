@@ -1,0 +1,97 @@
+# Template: compatibilidade entre versões do Moodle
+# Copiar → .github/workflows/ci-moodle-versions.yml
+#
+# Um DB por job (pgsql) pra baratear; use ci-databases.yml pra matriz de bancos.
+# Ajuste PHP por branch (tabela oficial PHP × Moodle).
+# Remova linhas que version.php não declara em $plugin->supported / requires.
+
+name: CI Moodle versions
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  moodle:
+    name: ${{ matrix.moodle-branch }} / PHP ${{ matrix.php }}
+    runs-on: ubuntu-24.04
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - php: "8.1"
+            moodle-branch: MOODLE_405_STABLE
+          - php: "8.3"
+            moodle-branch: MOODLE_405_STABLE
+          - php: "8.2"
+            moodle-branch: MOODLE_500_STABLE
+          - php: "8.3"
+            moodle-branch: MOODLE_501_STABLE
+          - php: "8.3"
+            moodle-branch: MOODLE_502_STABLE
+          - php: "8.4"
+            moodle-branch: MOODLE_502_STABLE
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: plugin
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: pgsql, mysqli, zip, gd, intl, xml, mbstring, soap
+          ini-values: max_input_vars=5000
+          coverage: none
+
+      - name: Initialise moodle-plugin-ci
+        run: |
+          composer create-project -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci ci ^4
+          echo $(cd ci/bin; pwd) >> $GITHUB_PATH
+          echo $(cd ci/vendor/bin; pwd) >> $GITHUB_PATH
+          sudo locale-gen en_AU.UTF-8
+          echo "NVM_DIR=$HOME/.nvm" >> $GITHUB_ENV
+
+      - name: Install Moodle + plugin
+        run: moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1
+        env:
+          DB: pgsql
+          MOODLE_BRANCH: ${{ matrix.moodle-branch }}
+
+      - name: PHP Lint
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci phplint
+
+      - name: Moodle Code Checker
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci phpcs --max-warnings 0
+
+      - name: Validate
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci validate
+
+      - name: Savepoints
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci savepoints
+
+      - name: Mustache + Grunt
+        if: ${{ !cancelled() }}
+        run: |
+          moodle-plugin-ci mustache
+          moodle-plugin-ci grunt --max-lint-warnings 0
+
+      - name: PHPUnit
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci phpunit --fail-on-warning

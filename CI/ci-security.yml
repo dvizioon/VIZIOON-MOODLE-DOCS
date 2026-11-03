@@ -1,0 +1,149 @@
+# Template: segurança do plugin (estático + moodle-plugin-ci)
+# Copiar → .github/workflows/ci-security.yml
+# Também copie CI/scripts/security-scan.sh para scripts/security-scan.sh no plugin
+#   (ou ajuste o path do step abaixo).
+#
+# Cobre anti-padrões NTI (curl_init, LIMIT SQL, SSL off, print_error, secrets),
+# privacy provider, phpcs/phpdoc/validate + install mínimo pra validate real.
+#
+# Doc: CI/README.md · 4.5.8/Seguranca/*
+
+name: CI Security
+
+on:
+  push:
+  pull_request:
+  schedule:
+    # Varredura semanal (opcional)
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  # ---- Job 1: scan estático (rápido, sem Moodle) ----
+  static-scan:
+    name: Static security patterns
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run APP-MOODLE security-scan.sh
+        run: |
+          chmod +x scripts/security-scan.sh
+          ./scripts/security-scan.sh .
+
+      - name: Bloquear arquivos sensíveis no pacote
+        run: |
+          set -e
+          BAD=0
+          # credenciais / dumps / PHP legado típico
+          if find . -iname '*password*' -o -iname '*.pem' -o -iname 'credentials.json' | grep -v '^\./\.git' | grep -q .; then
+            echo "::warning::Arquivos com nome sensível — revise"
+          fi
+          if find . -path '*/doc/*' -name '*.php' | grep -q .; then
+            echo "::error::PHP dentro de doc/ — não publique no plugin"
+            BAD=1
+          fi
+          if find . -name '*.zip' | grep -q .; then
+            echo "::error::ZIP versionado no plugin"
+            BAD=1
+          fi
+          # tokens JWT/hex longos em texto
+          if grep -RInE --include='*.php' --include='*.md' --include='*.txt' \
+              -e '[0-9a-fA-F]{32,}' . \
+              | grep -viE 'version\.php|tests/|\.git|composer\.lock|package-lock' \
+              | head -n 20 | grep -q .; then
+            echo "::warning::Possíveis hashes/tokens longos — revise (pode ser falso positivo)"
+          fi
+          exit $BAD
+
+      - name: Exigir privacy provider se há DB/install
+        run: |
+          if [[ -f db/install.xml ]] || [[ -f db/install.php ]]; then
+            if [[ ! -f classes/privacy/provider.php ]]; then
+              echo "::error::Plugin com DB precisa de classes/privacy/provider.php (LGPD)"
+              exit 1
+            fi
+          fi
+          echo "OK privacy check"
+
+  # ---- Job 2: moodle-plugin-ci (validate / coding / capabilities surface) ----
+  moodle-checks:
+    name: moodle-plugin-ci security-related
+    runs-on: ubuntu-24.04
+    needs: static-scan
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - php: "8.3"
+            moodle-branch: MOODLE_405_STABLE
+          # Descomente se o plugin declarar 5.2
+          # - php: "8.3"
+          #   moodle-branch: MOODLE_502_STABLE
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: plugin
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: pgsql, mysqli, zip, gd, intl, xml, mbstring, soap
+          ini-values: max_input_vars=5000
+          coverage: none
+
+      - name: Initialise moodle-plugin-ci
+        run: |
+          composer create-project -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci ci ^4
+          echo $(cd ci/bin; pwd) >> $GITHUB_PATH
+          echo $(cd ci/vendor/bin; pwd) >> $GITHUB_PATH
+          sudo locale-gen en_AU.UTF-8
+          echo "NVM_DIR=$HOME/.nvm" >> $GITHUB_ENV
+
+      - name: Install Moodle + plugin
+        run: moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1
+        env:
+          DB: pgsql
+          MOODLE_BRANCH: ${{ matrix.moodle-branch }}
+
+      - name: PHP Lint
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci phplint
+
+      - name: Moodle Code Checker (inclui várias regras de segurança/estilo)
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci phpcs --max-warnings 0
+
+      - name: PHPDoc
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci phpdoc --max-warnings 0
+
+      - name: Validate plugin (estrutura, version, capabilities declaradas)
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci validate
+
+      - name: Upgrade savepoints
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci savepoints
+
+      - name: Mustache (XSS em templates)
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci mustache
+
+      - name: PHPMD (heurísticas — não bloqueia)
+        continue-on-error: true
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci phpmd

@@ -1,0 +1,20 @@
+---
+description: CI GitHub Actions com moodle-plugin-ci (matrix Moodle/PHP/DB)
+alwaysApply: false
+---
+
+# moodle-plugin-ci
+
+Templates em `CI/`:
+
+| Workflow | Foco |
+|----------|------|
+| `ci-databases.yml` | pgsql · mariadb · mysqli |
+| `ci-moodle-versions.yml` | MOODLE_405…502 |
+| `ci-security.yml` | `scripts/security-scan.sh` + phpcs/validate |
+| `ci-quality.yml` | lint rápido |
+| `ci.yml` | suite completa |
+
+- Sem PHPUnit/Behat → remova steps
+- Oracle deprecado; sqlsrv ainda sem suporte estável no plugin-ci HQ
+- Skill: `moodle-plugin-ci` · Doc: `CI/README.md`

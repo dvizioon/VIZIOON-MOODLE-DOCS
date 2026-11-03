@@ -1,0 +1,13 @@
+---
+description: Padrão de Markdown do vault APP-MOODLE
+globs: "**/*.md"
+alwaysApply: false
+---
+
+# Docs APP-MOODLE
+
+- Fatos só do checkout citado (`4.5.8/`, `5.2/`). Path real no core.
+- Uma nota = um assunto. Links `[[4.5.8/Plugins/Forms|rótulo]]`.
+- Atualizar `README.md` raiz ao criar versão/tópico.
+- CI / naming / layout: ver `_meta/` e `CI/`.
+- PT-BR; identificadores Moodle em inglês.

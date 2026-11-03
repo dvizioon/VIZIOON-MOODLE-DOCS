@@ -1,0 +1,14 @@
+---
+description: Layout admin azul (Header/Footer hub) estilo OxyMsTeams/CatalogGate
+alwaysApply: false
+---
+
+# Layout admin — azul
+
+Paleta: `#1d4ed8` → `#0d6efd`. Borda footer `#0f172a`. Sem roxo em plugin novo.
+
+Estrutura: `layout/Header.php` + `Footer.php`; hub `admin/index.php` com cards `col-md-4`.
+
+Ciclo: `*_setup_page` → `$OUTPUT->header()` → `*_render_header` → corpo → `*_render_footer` → footer.
+
+Skill: `moodle-admin-layout`. Spec: `_meta/Layout-Admin-Padrao.md`.

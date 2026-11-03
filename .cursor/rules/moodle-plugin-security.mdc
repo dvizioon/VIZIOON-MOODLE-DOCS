@@ -1,0 +1,19 @@
+---
+description: Segurança de plugins Moodle (checklist NTI / Anti-padrões)
+alwaysApply: false
+---
+
+# Segurança plugin
+
+Antes de publicar ou abrir PR:
+
+1. Toda external com `validate_context` + `require_capability` (não confiar em `services.php`)
+2. `ajax => true` = qualquer logado — capability restrita ou tire o ajax
+3. Sem `LIMIT` SQL cru; clamp `perpage`
+4. TTL no `db/caches.php`, não no `set($k,$v,$ttl)`
+5. Sem secret/token plain em `config_plugins` / Git / `doc/`
+6. Sem gravar PHP em `$CFG->dirroot`
+7. `privacy/provider.php` se guarda PII
+8. `\curl` + SSL; escape XML/HTML
+
+Docs: `4.5.8/Seguranca/*`. Skill: `moodle-plugin-security`.
