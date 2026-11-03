@@ -43,5 +43,4 @@ moodledata/
 node_modules/
 vendor/
 
-# Clone da doc oficial Moodle (gigante) — não versionar
-devdocs/
+
