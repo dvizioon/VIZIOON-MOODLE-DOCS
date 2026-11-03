@@ -65,6 +65,8 @@ Links rápidos:
 - UI admin nova: azul `#1d4ed8` → `#0d6efd` ([[_meta/Layout-Admin-Padrao]]).
 - Repo de plugin: `moodle-<tipo>_<nome>` + `.github/workflows/ci.yml` ([[CI/README]]).
 - Código Moodle, clone `devdocs/`, `moodledata` **não** entram neste repositório (ver `.gitignore`).
+- DevDocs: `./scripts/limpar-devdocs.py` (`--clone` / `--pull`) — só MD 4.5–5.2.
+- JSDoc AMD: `./scripts/baixar-jsdoc.py` — **todas** as versões do [jsdoc.moodledev.io](https://jsdoc.moodledev.io/) → `jsdoc/` (módulos + fontes `*.js.html`).
 
 ## Estrutura do repositório
 
